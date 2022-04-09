@@ -64,7 +64,7 @@ function replaceReferences(media, base, asset) {
         reference = asset.substring(i, asset.indexOf(')', i));
 
         // Get the absolute path of the referenced asset.
-        const path = absoluteURL(base, reference.replace(/(\"|\')/g,''));
+        const path = absoluteURL(base, reference.replace(/(\"|\')/g, ''));
         if (media[path] != null) {
             if (media[path].type === 'text/css') {
                 media[path].data = replaceReferences(media, base, media[path].data);
@@ -77,7 +77,7 @@ function replaceReferences(media, base, asset) {
                         Base64.encode(media[path].data)
                 )}'`;
                 asset = `${asset.substring(0, i)}${embeddedAsset}${asset.substring(i + reference.length)}`;
-            } catch(e) {
+            } catch (e) {
                 console.warn(e);
             }
         }
@@ -87,7 +87,7 @@ function replaceReferences(media, base, asset) {
 
 // Converts the provided asset to a data URI based on the encoding.
 function convertAssetToDataURI(asset) {
-    switch(asset.encoding) {
+    switch (asset.encoding) {
         case 'quoted-printable':
             return `data:${asset.type};utf8,${escape(QuotedPrintable.decode(asset.data))}`;
         case 'base64':
@@ -109,12 +109,12 @@ const mhtml2html = {
      * @param {options.parseDOM} // The callback to parse an HTML string.
      * @returns an html document without resources if htmlOnly === true; an MHTML parsed object otherwise.
      */
-    parse: (mhtml, { htmlOnly = false, parseDOM  = defaultDOMParser } = {}) => {
+    parse: (mhtml, { htmlOnly = false, parseDOM = defaultDOMParser } = {}) => {
         const MHTML_FSM = {
-            MHTML_HEADERS : 0,
-            MTHML_CONTENT : 1,
-            MHTML_DATA    : 2,
-            MHTML_END     : 3
+            MHTML_HEADERS: 0,
+            MTHML_CONTENT: 1,
+            MHTML_DATA: 2,
+            MHTML_END: 3
         };
 
         let asset, headers, content, media, frames;  // Record-keeping.
@@ -122,10 +122,10 @@ const mhtml2html = {
         let state, key, next, index, i, l;           // States.
         let boundary;                                // Boundaries.
 
-        headers = { };
-        content = { };
-        media   = { };
-        frames  = { };
+        headers = {};
+        content = {};
+        media = {};
+        frames = {};
 
         // Initial state and index.
         state = MHTML_FSM.MHTML_HEADERS;
@@ -171,7 +171,7 @@ const mhtml2html = {
         }
 
         while (state != MHTML_FSM.MHTML_END) {
-            switch(state) {
+            switch (state) {
                 // Fetch document headers including the boundary to use.
                 case MHTML_FSM.MHTML_HEADERS: {
                     next = getLine();
@@ -185,14 +185,14 @@ const mhtml2html = {
 
                         // Ensure the extracted boundary exists.
                         assert(matches != null, `Missing boundary from document headers; Line ${l}`);
-                        boundary = matches[1].replace(/\"/g,'');
+                        boundary = matches[1].replace(/\"/g, '');
 
                         trim();
                         next = getLine();
 
                         // Expect the next boundary to appear.
                         assert(next.includes(boundary), `Expected boundary; Line ${l}`);
-                        content = { };
+                        content = {};
                         state = MHTML_FSM.MTHML_CONTENT;
                     }
                     break;
@@ -208,8 +208,8 @@ const mhtml2html = {
                         splitHeaders(next, content);
                     } else {
                         encoding = content['Content-Transfer-Encoding'];
-                        type     = content['Content-Type'];
-                        id       = content['Content-ID'];
+                        type = content['Content-Type'];
+                        id = content['Content-ID'];
                         location = content['Content-Location'];
 
                         // Assume the first boundary to be the document.
@@ -222,13 +222,13 @@ const mhtml2html = {
                         assert(typeof id !== 'undefined' || typeof location !== 'undefined',
                             `ID or location header not provided;  Line ${l}`);
                         assert(typeof encoding !== 'undefined', `Content-Transfer-Encoding not provided;  Line ${l}`);
-                        assert(typeof type     !== 'undefined', `Content-Type not provided; Line ${l}`);
+                        assert(typeof type !== 'undefined', `Content-Type not provided; Line ${l}`);
 
                         asset = {
-                            encoding : encoding,
-                            type : type,
-                            data : '',
-                            id : id
+                            encoding: encoding,
+                            type: type,
+                            data: '',
+                            id: id
                         };
 
                         // Keep track of frames by ID.
@@ -242,7 +242,7 @@ const mhtml2html = {
                         }
 
                         trim();
-                        content = { };
+                        content = {};
                         state = MHTML_FSM.MHTML_DATA;
                     }
                     break;
@@ -303,32 +303,32 @@ const mhtml2html = {
         }
 
         frames = mhtml.frames;
-        media  = mhtml.media;
-        index  = mhtml.index;
+        media = mhtml.media;
+        index = mhtml.index;
 
         assert(typeof frames === "object", 'MHTML error: invalid frames');
-        assert(typeof media  === "object", 'MHTML error: invalid media' );
-        assert(typeof index  === "string", 'MHTML error: invalid index' );
+        assert(typeof media === "object", 'MHTML error: invalid media');
+        assert(typeof index === "string", 'MHTML error: invalid index');
         assert(media[index] && media[index].type === "text/html", 'MHTML error: invalid index');
 
         const dom = parseDOM(media[index].data);
         const documentElem = dom.window.document;
-        const nodes = [ documentElem ];
+        const nodes = [documentElem];
 
         // Merge resources into the document.
         while (nodes.length) {
             const childNode = nodes.shift();
 
             // Resolve each node.
-            childNode.childNodes.forEach(function(child) {
+            childNode.childNodes.forEach(function (child) {
                 if (child.getAttribute) {
                     href = child.getAttribute('href');
-                    src  = child.getAttribute('src');
+                    src = child.getAttribute('src');
                 }
                 if (child.removeAttribute) {
                     child.removeAttribute('integrity');
                 }
-                switch(child.tagName) {
+                switch (child.tagName) {
                     case 'HEAD':
                         // Link targets should be directed to the outer frame.
                         base = documentElem.createElement("base");
@@ -360,7 +360,7 @@ const mhtml2html = {
                             // Embed the image into the document.
                             try {
                                 img = convertAssetToDataURI(media[src]);
-                            } catch(e) {
+                            } catch (e) {
                                 console.warn(e);
                             }
                             if (img !== null) {
@@ -377,7 +377,7 @@ const mhtml2html = {
 
                             if (frame && frame.type === 'text/html') {
                                 const iframe = mhtml2html.convert({
-                                    media: Object.assign({}, media, { [id] : frame }),
+                                    media: Object.assign({}, media, { [id]: frame }),
                                     frames: frames,
                                     index: id,
                                 }, { convertIframes, parseDOM });

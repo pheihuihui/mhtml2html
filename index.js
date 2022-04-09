@@ -26,7 +26,7 @@ yargs
             type: 'string'
         })
     }, (argv) => {
-        fs.readFile(argv.input, 'utf8',  (err, data) => {
+        fs.readFile(argv.input, 'utf8', (err, data) => {
             if (err) {
                 throw err;
             }
